@@ -21,22 +21,20 @@ type Graph interface {
 // AdjBGraph is a representation of a bipartite graph G.
 // It's an adjacency matrix of the form |X| x |Y|, where X and Y are vertex sets in G.
 //
-type AdjBGraph struct {
-	Repr [][]uint8
-}
+type AdjBGraph [][]uint8
 
 // NewEmptyGraph implements the Graph interface by initializing a graph
 // 				to be empty with the appropriate vertex lengths.
-func (b *AdjBGraph) NewEmptyGraph(nums ...uint8) error {
+func (G *AdjBGraph) NewEmptyGraph(nums ...uint8) error {
 	if len(nums) != 2 {
 		return errors.New("must use 2 set sizes X and Y to initialize the bipartite graph")
 	}
 	if nums[0] == 0 || nums[1] == 0 {
 		return errors.New("numbers must be non-zero")
 	}
-	b.Repr = make([][]uint8, nums[0])
-	for i := range b.Repr {
-		b.Repr[i] = make([]uint8, nums[1])
+	*G = make([][]uint8, nums[0])
+	for i := range *G {
+		(*G)[i] = make([]uint8, nums[1])
 	}
 	return nil
 }
@@ -55,3 +53,8 @@ func (b *AdjBGraph) NewEmptyGraph(nums ...uint8) error {
 // - for vertices in Y, add |X| to n, i.e. do a[n + |X|].
 //
 type AdjVertexSet map[uint16]bool
+
+// AdjMatching is implemented as a subgraph of AdjBGraph,
+// as it uses a subset of edges of the given graph.
+// The vertices can be ignored, we will only focus on the edges.
+type AdjMatching AdjBGraph

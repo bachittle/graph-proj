@@ -6,6 +6,6 @@ package graph
 //
 // It takes a bipartite graph, a matching M in the graph,
 // 		and a vertex set U of M-unsaturated vertices.
-func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *VertexSet) {
+func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *AdjVertexSet) {
 
 }
