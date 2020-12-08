@@ -3,6 +3,7 @@ package graph
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"io/ioutil"
 )
 
@@ -31,7 +32,7 @@ type Graph interface {
 	Marshal() ([]byte, error)
 
 	// Unmarshal opens a .json file and initializes the graph object to the data of the file.
-	Unmarshal(path string) error
+	Unmarshal(r io.Reader) error
 }
 
 // AdjBGraph is a representation of a bipartite graph G.
@@ -101,17 +102,36 @@ func (G AdjBGraph) NumEdges() uint16 {
 }
 
 // Marshal implements the marshal function from the Graph interface
-// saves an adjacency matrix as a JSON array
-func (G AdjBGraph) Marshal() ([]byte, error) {
-	b, err := json.Marshal(G)
-	return b, err
+// saves an adjacency matrix as 2 types:
+// - "json" => json file
+// - "tex" => latex file (for visualization)
+func (G AdjBGraph) Marshal(Types ...string) (b []byte, err error) {
+	for _, t := range Types {
+		switch t {
+		case "json":
+			b, err = json.Marshal(G)
+			break
+		case "tex":
+			b, err = texMarshal(G)
+		}
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+// converts a given graph G to a tex file (for visualization)
+// saves to byte array, and you can do whatever you want with it (save to file, to RAM, etc.)
+func texMarshal(G AdjBGraph) (b []byte, err error) {
+	return
 }
 
 // Unmarshal implements the Graph interface Unmarshal
-// It opens a valid JSON file.
+// It opens a valid JSON file (not latex, that would be counterproductive).
 // "valid" means it is an array of arrays of type uint16
-func (G AdjBGraph) Unmarshal(path string) error {
-	b, err := ioutil.ReadFile(path)
+func (G AdjBGraph) Unmarshal(r io.Reader) error {
+	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return err
 	}
@@ -186,18 +206,18 @@ func (A AdjVertexSet) Minus(B AdjVertexSet) (AmB AdjVertexSet) {
 // as it uses a subset of edges of the given graph.
 // The vertices can be ignored, we will only focus on the edges.
 type AdjMatching struct {
-	Repr   AdjBGraph  // representation of the matching
+	Graph  AdjBGraph  // underlying GRAPHICAL representation of the matching
 	Parent *AdjBGraph // the matching is associated with this graph
 }
 
 // EmptyMatch initializes an empty match associated with graph G
 func EmptyMatch(G *AdjBGraph) (M AdjMatching) {
-	M.Repr = EmptyGraph(*G)
+	M.Graph = EmptyGraph(*G)
 	M.Parent = G
 	return
 }
 
 // Len gets the length (i.e. number of edges) in the matching.
 func (M AdjMatching) Len() uint16 {
-	return M.Repr.NumEdges()
+	return M.Graph.NumEdges()
 }

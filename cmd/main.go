@@ -18,9 +18,10 @@ import (
 func main() {
 	var G graph.AdjBGraph
 	(&G).Set([][]uint16{{1, 1}, {1, 1}})
-	fmt.Println(G)
 	M := graph.EmptyMatch(&G)
 	U := G.X
+	fmt.Println("G:", G)
+	fmt.Println("M:", M)
 	vc, path := graph.AugmentingPath(&G, &M, &U)
 	fmt.Println(vc, path)
 }
