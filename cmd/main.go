@@ -10,6 +10,12 @@
 //
 package main
 
-func main() {
+import (
+	"fmt"
+	"github.com/bachittle/graph-proj/graph"
+)
 
+func main() {
+	g := graph.AdjBGraph{{1, 1}, {1, 1}}
+	fmt.Println(g)
 }
