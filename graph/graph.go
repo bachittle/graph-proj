@@ -19,6 +19,9 @@ type Graph interface {
 	// Normally, this is initializing an empty adjacency matrix.
 	NewEmptyGraph(...uint16) error
 
+	// Set graph by its representation
+	Set(interface{}) error
+
 	// NumEdges counts the number of edges in the given graph.
 	// if its a matrix, you must count every element in the matrix.
 	NumEdges() uint16
@@ -33,21 +36,59 @@ type Graph interface {
 
 // AdjBGraph is a representation of a bipartite graph G.
 // It's an adjacency matrix of the form |X| x |Y|, where X and Y are vertex sets in G.
-//
-type AdjBGraph [][]uint16
+type AdjBGraph struct {
+	Repr [][]uint16
+	X    AdjVertexSet
+	Y    AdjVertexSet
+}
+
+// EmptyGraph takes another graph and initializes a copied empty graph
+func EmptyGraph(G AdjBGraph) AdjBGraph {
+	if len(G.Repr) > 0 {
+		G.NewEmptyGraph(uint16(len(G.Repr)), uint16(len(G.Repr[0])))
+	} else {
+		G.NewEmptyGraph(0, 0)
+	}
+	return G
+}
 
 // NewEmptyGraph implements the Graph interface by initializing a graph
-// 				to be empty with the appropriate vertex lengths.
-func (G *AdjBGraph) NewEmptyGraph(nums ...uint8) error {
+// to be empty with the appropriate vertex lengths.
+func (G *AdjBGraph) NewEmptyGraph(nums ...uint16) error {
 	if len(nums) != 2 {
 		return errors.New("must use 2 set sizes X and Y to initialize the bipartite graph")
 	}
 	if nums[0] == 0 || nums[1] == 0 {
-		return errors.New("numbers must be non-zero")
+		// zeroes, initialize a nil array
+		return errors.New("initialized a nil array")
 	}
-	*G = make([][]uint16, nums[0])
-	for i := range *G {
-		(*G)[i] = make([]uint16, nums[1])
+	G.Repr = make([][]uint16, nums[0])
+	for i := range G.Repr {
+		G.Repr[i] = make([]uint16, nums[1])
+	}
+	G.X.Init(G)
+	G.Y.Init(G)
+	return nil
+}
+
+// Set a graph to its representation
+func (G *AdjBGraph) Set(adjMat interface{}) error {
+	mat, ok := adjMat.([][]uint16)
+	if !ok {
+		return errors.New("not uint16")
+	}
+	G.Repr = mat
+	G.X.Init(G)
+	G.Y.Init(G)
+	for i := 0; i < len(mat); i++ {
+		G.X.Repr[uint16(i)] = true
+	}
+	if len(mat) == 0 {
+		// zero valued matrix
+		return nil
+	}
+	for j := 0; j < len(mat[0]); j++ {
+		G.Y.Repr[uint16(j)] = true
 	}
 	return nil
 }
@@ -56,13 +97,7 @@ func (G *AdjBGraph) NewEmptyGraph(nums ...uint8) error {
 // this calculates the number of edges by iterating through the array, and
 // increments the count by the value in the adjacency matrix.
 func (G AdjBGraph) NumEdges() uint16 {
-	var count uint16 = 0
-	for i := 0; i < len(G); i++ {
-		for j := 0; j <= len(G[i]); j++ {
-			count += G[i][j]
-		}
-	}
-	return count
+	return G.X.Len() + G.Y.Len()
 }
 
 // Marshal implements the marshal function from the Graph interface
@@ -89,21 +124,77 @@ func (G AdjBGraph) Unmarshal(path string) error {
 //
 // Ex: 3x3 adjacency matrix represents |V(G)| = 3
 // var a AdjVertexSet
-// a[0] => true
-// a[2] => true
-// a[3] => false
+// a.Repr[0] => true
+// a.Repr[2] => true
+// a.Repr[3] => false
 //
 // for use in bipartite graphs, do the following:
-// - for vertices in X, check with the usual a[n], where a is vertex set and n is col name
+// - for vertices in X, check with the usual a.Repr[n], where a is vertex set and n is col name
 // - for vertices in Y, add |X| to n, i.e. do a[n + |X|].
 //
-type AdjVertexSet map[uint32]bool
+type AdjVertexSet struct {
+	Repr   map[uint16]bool // representation of a vertex set is a map
+	Parent *AdjBGraph      // the vertex set is for this graph
+}
+
+// Init sets the nil map to have zeroed values
+func (A *AdjVertexSet) Init(parent *AdjBGraph) {
+	A.Repr = make(map[uint16]bool)
+	A.Parent = parent
+}
+
+// Len gets the length (number of vertices) in the set
+func (A AdjVertexSet) Len() uint16 {
+	return uint16(len(A.Repr))
+}
+
+// Union performs a set union between two vertex sets
+func (A AdjVertexSet) Union(B AdjVertexSet) (AuB AdjVertexSet) {
+	AuB.Init(A.Parent)
+	for k := range A.Repr {
+		AuB.Repr[k] = true
+	}
+	for k := range B.Repr {
+		AuB.Repr[k] = true
+	}
+	return
+}
+
+// Insec performs a set intersection between two vertex sets
+func (A AdjVertexSet) Insec(B AdjVertexSet) (AnB AdjVertexSet) {
+	AnB.Init(A.Parent)
+	for k := range A.Repr {
+		if B.Repr[k] == true {
+			AnB.Repr[k] = true
+		}
+	}
+	return
+}
+
+// Minus performs a set subtraction between two vertex sets
+func (A AdjVertexSet) Minus(B AdjVertexSet) (AmB AdjVertexSet) {
+	AmB.Init(A.Parent)
+	for k := range A.Repr {
+		if B.Repr[k] == false {
+			AmB.Repr[k] = true
+		}
+	}
+	return
+}
 
 // AdjMatching is implemented as a subgraph of AdjBGraph,
 // as it uses a subset of edges of the given graph.
 // The vertices can be ignored, we will only focus on the edges.
 type AdjMatching struct {
-	Repr AdjBGraph // representation of the matching
+	Repr   AdjBGraph  // representation of the matching
+	Parent *AdjBGraph // the matching is associated with this graph
+}
+
+// EmptyMatch initializes an empty match associated with graph G
+func EmptyMatch(G *AdjBGraph) (M AdjMatching) {
+	M.Repr = EmptyGraph(*G)
+	M.Parent = G
+	return
 }
 
 // Len gets the length (i.e. number of edges) in the matching.

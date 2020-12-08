@@ -16,6 +16,11 @@ import (
 )
 
 func main() {
-	g := graph.AdjBGraph{{1, 1}, {1, 1}}
-	fmt.Println(g)
+	var G graph.AdjBGraph
+	(&G).Set([][]uint16{{1, 1}, {1, 1}})
+	fmt.Println(G)
+	M := graph.EmptyMatch(&G)
+	U := G.X
+	vc, path := graph.AugmentingPath(&G, &M, &U)
+	fmt.Println(vc, path)
 }
