@@ -20,8 +20,8 @@ func main() {
 	(&G).Set([][]uint16{{1, 1}, {1, 1}})
 	M := graph.EmptyMatch(&G)
 	U := G.X
-	fmt.Println("G:", G)
-	fmt.Println("M:", M)
-	vc, path := graph.AugmentingPath(&G, &M, &U)
-	fmt.Println(vc, path)
+	//fmt.Println("G:", G)
+	//fmt.Println("M:", M)
+	vc, hasAugPath := graph.AugmentingPath(&G, &M, &U)
+	fmt.Println(vc, hasAugPath)
 }

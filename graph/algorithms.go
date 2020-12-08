@@ -15,24 +15,27 @@ import (
 // 		and an augmenting path if the graph has one.
 //
 func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *AdjVertexSet) (
-	vertexCover AdjVertexSet,
-	augPath *AdjBGraph,
+	vc [2]AdjVertexSet, // vertices in S, vertices in T
+	hasAugPath bool,
 ) {
 	// initialize S and T. S=U and T=empty
+
+	// S => vertices in G.X
 	S := *U
+	// T => vertices in G.Y
 	var T AdjVertexSet
 	T.Init(G)
 
 	// mark arrays with a vertex set
 	var marked AdjVertexSet
+	marked.Init(G)
 
 	// continue in a loop while U - marked != 0
 	for S.Minus(marked).Len() != 0 {
-		fmt.Println(S.Minus(marked).Len())
+		// fmt.Println(S.Minus(marked).Len())
 		// iterate through unmarked vertices
 		for x := range S.Minus(marked).Repr {
 			// x => vertex in S subset X
-			fmt.Printf("N(%v) = {", x)
 			for y := range G.Y.Repr {
 				// consider the neighbors of x
 				// y => vertices which are a neighbour of x in Y
@@ -41,32 +44,39 @@ func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *AdjVertexSet) (
 				// if x,y is an edge in G | if x,y is NOT an edge in M
 				//       V                    V
 				if G.Repr[x][y] > 0 && M.Graph.Repr[x][y] == 0 {
-					fmt.Printf("%v, ", y)
+					fmt.Printf("%v: ", y)
 					// check if y is saturated in M by any other edges
-					saturated := false
 					// for all weX
-					for w := range M.Graph.X.Repr {
+					for w := range G.X.Repr {
 						// w => vertices which are a neighbour of y in X, not including x
-						if w != x && G.Repr[w][y] == 1 {
+						if w != x && M.Graph.Repr[w][y] == 1 {
 							// y is saturated in M.
-							fmt.Println("saturated")
-							saturated = true
+							fmt.Println(y, "is saturated")
 							// include y in T and w in S
 							T.Repr[y] = true
 							S.Repr[w] = true
 
+						} else {
+							fmt.Println(y, "is NOT saturated")
+							// report an M-augmenting path
+							vc[0] = S
+							vc[1] = T
+							hasAugPath = true
+							return
 						}
 					}
-					if !saturated {
-						// report an M-augmenting path
-					}
+
 				}
 			}
-			fmt.Println("}")
+			// mark x and iterate
+			marked.Repr[x] = true
+			//fmt.Println("}")
 		}
 		break
 	}
 	// return Tu(X-S) as minimum cover
-	vertexCover = T.Union(G.X.Minus(S))
+	vc[0] = G.X.Minus(S)
+	vc[1] = T
+	hasAugPath = false
 	return
 }
