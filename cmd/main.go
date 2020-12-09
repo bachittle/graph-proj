@@ -17,11 +17,20 @@ import (
 
 func main() {
 	var G graph.AdjBGraph
-	(&G).Set([][]uint16{{1, 1}, {1, 1}})
-	err := G.SavePDF("../graph/data/test")
+	mat := make([][]uint16, 10)
+	for i := range mat {
+		mat[i] = make([]uint16, 10)
+		for j := range mat[i] {
+			mat[i][j] = 1
+		}
+	}
+
+	(&G).Set(mat)
+	M := graph.MaximumMatching(G)
+	fmt.Println(M)
+	err := G.SavePDF("../graph/data/test", &M)
 	if err != nil {
 		panic(err)
 	}
-	M := graph.MaximumMatching(G)
-	fmt.Println(M)
+
 }

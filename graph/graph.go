@@ -119,7 +119,7 @@ func (G AdjBGraph) Marshal(Types ...string) (b []byte, err error) {
 			b, err = json.Marshal(G)
 			break
 		case "tex":
-			b, err = texMarshal(G)
+			b, err = texMarshal(G, nil)
 			break
 		}
 		if err != nil {
@@ -131,7 +131,7 @@ func (G AdjBGraph) Marshal(Types ...string) (b []byte, err error) {
 
 // converts a given graph G to a tex file (for visualization)
 // saves to byte array, and you can do whatever you want with it (save to file, to RAM, etc.)
-func texMarshal(G AdjBGraph) (b []byte, err error) {
+func texMarshal(G AdjBGraph, M *AdjMatching) (b []byte, err error) {
 	b = append(b, []byte(`\documentclass{article}
 \usepackage{tikz}
 \begin{document}
@@ -147,23 +147,25 @@ func texMarshal(G AdjBGraph) (b []byte, err error) {
 		b = append(b, []byte(fmt.Sprintf("\t\\node (Y%d) at (%d, 1) {};\n", y, y))...)
 	}
 
-	b = append(b, []byte("\n\t\\draw\n")...)
 	// edge initialization
 	for x := range G.X.Repr {
 		for y := range G.Y.Repr {
 			if G.Repr[x][y] > 0 {
-				b = append(b, []byte(fmt.Sprintf("\t(X%d) -- (Y%d)\n", x, y))...)
+				style := ""
+				if M != nil && M.Graph.Repr[x][y] > 0 {
+					style = "[red, very thick]"
+				}
+				b = append(b, []byte(fmt.Sprintf("\t\\draw %v (X%d) -- (Y%d)\n;", style, x, y))...)
 			}
 		}
 	}
-	b = append(b, []byte(`	;
-\end{tikzpicture}
+	b = append(b, []byte(`\end{tikzpicture}
 \end{document}`)...)
 	return
 }
 
 // SavePDF takes the graph and outputs in PDF form for visualization
-func (G AdjBGraph) SavePDF(filename string) error {
+func (G AdjBGraph) SavePDF(filename string, M *AdjMatching) error {
 	basename := filepath.Base(filename)
 	err := os.Mkdir(filename, 0644)
 	if err != nil {
@@ -175,7 +177,7 @@ func (G AdjBGraph) SavePDF(filename string) error {
 	if err != nil {
 		return err
 	}
-	b, err := G.Marshal("tex")
+	b, err := texMarshal(G, M)
 	if err != nil {
 		return err
 	}
