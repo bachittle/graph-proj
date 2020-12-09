@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 )
 
 // Graph is an abstract concept in mathematics that has a couple representations.
@@ -49,11 +50,7 @@ type AdjBGraph struct {
 
 // EmptyGraph takes another graph and initializes a copied empty graph
 func EmptyGraph(G AdjBGraph) AdjBGraph {
-	if len(G.Repr) > 0 {
-		G.NewEmptyGraph(uint16(len(G.Repr)), uint16(len(G.Repr[0])))
-	} else {
-		G.NewEmptyGraph(0, 0)
-	}
+	G.NewEmptyGraph(uint16(len(G.X.Repr)), uint16(len(G.Y.Repr)))
 	return G
 }
 
@@ -102,7 +99,13 @@ func (G *AdjBGraph) Set(adjMat interface{}) error {
 // this calculates the number of edges by iterating through the array, and
 // increments the count by the value in the adjacency matrix.
 func (G AdjBGraph) NumEdges() uint16 {
-	return G.X.Len() + G.Y.Len()
+	var count uint16 = 0
+	for i := range G.X.Repr {
+		for j := range G.Y.Repr {
+			count += G.Repr[i][j]
+		}
+	}
+	return count
 }
 
 // Marshal implements the marshal function from the Graph interface
@@ -205,6 +208,22 @@ func (G AdjBGraph) Unmarshal(r io.Reader) error {
 	return err
 }
 
+// VMap maps vertices to a boolean (whether it exists or not)
+type VMap map[uint16]bool
+
+// Keys gets the keys of a map
+func (v VMap) Keys() (a []uint16) {
+	var b []int
+	for k := range v {
+		b = append(b, int(k))
+	}
+	sort.Ints(b)
+	for _, v := range b {
+		a = append(a, uint16(v))
+	}
+	return
+}
+
 // AdjVertexSet is a set of vertices in a given graph G
 // It maps the index of the vertex in the adjacency matrix with whether it exists in G (true/false).
 //
@@ -219,13 +238,13 @@ func (G AdjBGraph) Unmarshal(r io.Reader) error {
 // - for vertices in Y, add |X| to n, i.e. do a[n + |X|].
 //
 type AdjVertexSet struct {
-	Repr   map[uint16]bool // representation of a vertex set is a map
-	Parent *AdjBGraph      // the vertex set is for this graph
+	Repr   VMap       // representation of a vertex set is a map
+	Parent *AdjBGraph // the vertex set is for this graph
 }
 
 // Init sets the nil map to have zeroed values
 func (A *AdjVertexSet) Init(parent *AdjBGraph) {
-	A.Repr = make(map[uint16]bool)
+	A.Repr = make(VMap)
 	A.Parent = parent
 }
 

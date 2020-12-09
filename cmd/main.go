@@ -22,11 +22,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	M := graph.EmptyMatch(&G)
-	U := G.X
-	//fmt.Println("G:", G)
-	//fmt.Println("M:", M)
-	vc, augPath := graph.AugmentingPath(&G, &M, &U)
-	fmt.Println(vc)
-	fmt.Println(augPath)
+	M := graph.MaximumMatching(G)
+	fmt.Println(M)
 }

@@ -42,9 +42,10 @@ func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *AdjVertexSet) (
 	for S.Minus(marked).Len() != 0 {
 		// fmt.Println(S.Minus(marked).Len())
 		// iterate through unmarked vertices
-		for x := range S.Minus(marked).Repr {
+		for _, x := range S.Minus(marked).Repr.Keys() {
+			fmt.Println("x:", x)
 			// x => vertex in S subset X
-			for y := range G.Y.Repr {
+			for _, y := range G.Y.Repr.Keys() {
 				// consider the neighbors of x
 				// y => vertices which are a neighbour of x in Y
 				// such that x,y is not an element of M
@@ -54,32 +55,35 @@ func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *AdjVertexSet) (
 				if G.Repr[x][y] > 0 && M.Graph.Repr[x][y] == 0 {
 					fmt.Printf("%v: ", y)
 					// check if y is saturated in M by any other edges
+					saturated := false
 					// for all weX
-					for w := range G.X.Repr {
+					for _, w := range G.X.Repr.Keys() {
 						// w => vertices which are a neighbour of y in X, not including x
+						fmt.Println("w:", w)
 						if w != x && M.Graph.Repr[w][y] == 1 {
 							// y is saturated in M.
 							fmt.Println(y, "is saturated")
 							// include y in T and w in S
 							T.Repr[y] = true
 							S.Repr[w] = true
-
-						} else {
-							fmt.Println(y, "is NOT saturated")
-							// report an M-augmenting path
-							vc[0] = S
-							vc[1] = T
-							if marked.Len() == 0 {
-								// set the path to be the X value
-								augPath.X.Repr[x] = true
-								augPath.Y.Repr[y] = true
-								augPath.Repr[x][y] = 1
-							} else {
-								// use marked vertices?
-								panic("implement this")
-							}
-							return
+							saturated = true
 						}
+					}
+					if !saturated {
+						fmt.Println(y, "is NOT saturated")
+						// report an M-augmenting path
+						vc[0] = S
+						vc[1] = T
+						if marked.Len() == 0 {
+							// set the path to be the X value
+							augPath.X.Repr[x] = true
+							augPath.Y.Repr[y] = true
+							augPath.Repr[x][y] = 1
+						} else {
+							// use marked vertices?
+							panic("implement this")
+						}
+						return
 					}
 				}
 			}
@@ -94,4 +98,30 @@ func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *AdjVertexSet) (
 	vc[1] = T
 	augPath = nil
 	return
+}
+
+// MaximumMatching uses the AugmentingPath algorithm to get the maximum
+// matching in G, and returns it.
+func MaximumMatching(G AdjBGraph) AdjMatching {
+	M := EmptyMatch(&G)
+	U := G.X
+	fmt.Println("G:", G)
+	fmt.Println("M:", M)
+	vc, augPath := AugmentingPath(&G, &M, &U)
+	for augPath != nil {
+		for _, x := range augPath.X.Repr.Keys() {
+			for _, y := range augPath.Y.Repr.Keys() {
+				M.Graph.Repr[x][y] = 1
+				M.Graph.Y.Repr[y] = true
+			}
+			M.Graph.X.Repr[x] = true
+		}
+		U = U.Minus(M.Graph.X)
+		fmt.Println("U:", U)
+		fmt.Println("M:", M, "len:", M.Len())
+		fmt.Println("vc:", vc, "len:", vc[0].Len(), "+", vc[1].Len())
+		fmt.Println("path:", augPath)
+		vc, augPath = AugmentingPath(&G, &M, &U)
+	}
+	return M
 }
