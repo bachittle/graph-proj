@@ -3,8 +3,12 @@ package graph
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
+	"os/exec"
+	"path/filepath"
 )
 
 // Graph is an abstract concept in mathematics that has a couple representations.
@@ -104,7 +108,7 @@ func (G AdjBGraph) NumEdges() uint16 {
 // Marshal implements the marshal function from the Graph interface
 // saves an adjacency matrix as 2 types:
 // - "json" => json file
-// - "tex" => latex file (for visualization)
+// - "tex" => tex file of the graph (for visualization)
 func (G AdjBGraph) Marshal(Types ...string) (b []byte, err error) {
 	for _, t := range Types {
 		switch t {
@@ -113,6 +117,7 @@ func (G AdjBGraph) Marshal(Types ...string) (b []byte, err error) {
 			break
 		case "tex":
 			b, err = texMarshal(G)
+			break
 		}
 		if err != nil {
 			return
@@ -124,7 +129,68 @@ func (G AdjBGraph) Marshal(Types ...string) (b []byte, err error) {
 // converts a given graph G to a tex file (for visualization)
 // saves to byte array, and you can do whatever you want with it (save to file, to RAM, etc.)
 func texMarshal(G AdjBGraph) (b []byte, err error) {
+	b = append(b, []byte(`\documentclass{article}
+\usepackage{tikz}
+\begin{document}
+
+\begin{tikzpicture}[every node/.style={circle,inner sep=1pt,fill=black}]
+`)...)
+
+	// node initialization
+	for x := range G.X.Repr {
+		b = append(b, []byte(fmt.Sprintf("\t\\node (X%d) at (%d, 0) {};\n", x, x))...)
+	}
+	for y := range G.Y.Repr {
+		b = append(b, []byte(fmt.Sprintf("\t\\node (Y%d) at (%d, 1) {};\n", y, y))...)
+	}
+
+	b = append(b, []byte("\n\t\\draw\n")...)
+	// edge initialization
+	for x := range G.X.Repr {
+		for y := range G.Y.Repr {
+			if G.Repr[x][y] > 0 {
+				b = append(b, []byte(fmt.Sprintf("\t(X%d) -- (Y%d)\n", x, y))...)
+			}
+		}
+	}
+	b = append(b, []byte(`	;
+\end{tikzpicture}
+\end{document}`)...)
 	return
+}
+
+// SavePDF takes the graph and outputs in PDF form for visualization
+func (G AdjBGraph) SavePDF(filename string) error {
+	basename := filepath.Base(filename)
+	err := os.Mkdir(filename, 0644)
+	if err != nil {
+		if !os.IsExist(err) {
+			return err
+		}
+	}
+	err = os.Chdir(filename)
+	if err != nil {
+		return err
+	}
+	b, err := G.Marshal("tex")
+	if err != nil {
+		return err
+	}
+	f, err := os.OpenFile(fmt.Sprint(basename, ".tex"),
+		os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		return err
+	}
+	f.Write(b)
+	cmd := exec.Command("pdflatex", fmt.Sprint(basename, ".tex"))
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return err
+	}
+	f, err = os.OpenFile(fmt.Sprint(basename, ".log"),
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f.Write(out)
+	return err
 }
 
 // Unmarshal implements the Graph interface Unmarshal

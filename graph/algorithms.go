@@ -16,9 +16,17 @@ import (
 //
 func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *AdjVertexSet) (
 	vc [2]AdjVertexSet, // vertices in S, vertices in T
-	hasAugPath bool,
+	augPath *AdjBGraph,
 ) {
-	// initialize S and T. S=U and T=empty
+	augPath = new(AdjBGraph)
+	augPath.Repr = make([][]uint16, G.X.Len())
+	for i := range augPath.Repr {
+		augPath.Repr[i] = make([]uint16, G.Y.Len())
+	}
+	augPath.X.Init(G)
+	augPath.Y.Init(G)
+	// initialize S and T
+	// S=U and T=empty
 
 	// S => vertices in G.X
 	S := *U
@@ -61,11 +69,18 @@ func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *AdjVertexSet) (
 							// report an M-augmenting path
 							vc[0] = S
 							vc[1] = T
-							hasAugPath = true
+							if marked.Len() == 0 {
+								// set the path to be the X value
+								augPath.X.Repr[x] = true
+								augPath.Y.Repr[y] = true
+								augPath.Repr[x][y] = 1
+							} else {
+								// use marked vertices?
+								panic("implement this")
+							}
 							return
 						}
 					}
-
 				}
 			}
 			// mark x and iterate
@@ -77,6 +92,6 @@ func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *AdjVertexSet) (
 	// return Tu(X-S) as minimum cover
 	vc[0] = G.X.Minus(S)
 	vc[1] = T
-	hasAugPath = false
+	augPath = nil
 	return
 }
