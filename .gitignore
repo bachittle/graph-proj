@@ -1,1 +1,2 @@
-graph/data
+graph/data/*
+!graph/data/readme.md
