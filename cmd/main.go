@@ -28,7 +28,7 @@ func main() {
 	(&G).Set(mat)
 	M := graph.MaximumMatching(G)
 	fmt.Println(M)
-	err := G.SavePDF("../graph/data/test", &M)
+	err := G.SavePDF("../graph/data/k10,10", &M)
 	if err != nil {
 		panic(err)
 	}

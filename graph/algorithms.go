@@ -1,7 +1,7 @@
 package graph
 
 import (
-	"fmt"
+//"fmt"
 )
 
 // AugmentingPath implements the algorithm outlined in a graph theory textbook:
@@ -43,7 +43,7 @@ func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *AdjVertexSet) (
 		// fmt.Println(S.Minus(marked).Len())
 		// iterate through unmarked vertices
 		for _, x := range S.Minus(marked).Repr.Keys() {
-			fmt.Println("x:", x)
+			//fmt.Println("x:", x)
 			// x => vertex in S subset X
 			for _, y := range G.Y.Repr.Keys() {
 				// consider the neighbors of x
@@ -53,16 +53,16 @@ func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *AdjVertexSet) (
 				// if x,y is an edge in G | if x,y is NOT an edge in M
 				//       V                    V
 				if G.Repr[x][y] > 0 && M.Graph.Repr[x][y] == 0 {
-					fmt.Printf("%v: ", y)
+					//fmt.Printf("%v: ", y)
 					// check if y is saturated in M by any other edges
 					saturated := false
 					// for all weX
 					for _, w := range G.X.Repr.Keys() {
 						// w => vertices which are a neighbour of y in X, not including x
-						fmt.Println("w:", w)
+						//fmt.Println("w:", w)
 						if w != x && M.Graph.Repr[w][y] == 1 {
 							// y is saturated in M.
-							fmt.Println(y, "is saturated")
+							//fmt.Println(y, "is saturated")
 							// include y in T and w in S
 							T.Repr[y] = true
 							S.Repr[w] = true
@@ -70,7 +70,7 @@ func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *AdjVertexSet) (
 						}
 					}
 					if !saturated {
-						fmt.Println(y, "is NOT saturated")
+						//fmt.Println(y, "is NOT saturated")
 						// report an M-augmenting path
 						vc[0] = S
 						vc[1] = T
@@ -89,7 +89,7 @@ func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *AdjVertexSet) (
 			}
 			// mark x and iterate
 			marked.Repr[x] = true
-			//fmt.Println("}")
+			// fmt.Println("}")
 		}
 		break
 	}
@@ -105,9 +105,9 @@ func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *AdjVertexSet) (
 func MaximumMatching(G AdjBGraph) AdjMatching {
 	M := EmptyMatch(&G)
 	U := G.X
-	fmt.Println("G:", G)
-	fmt.Println("M:", M)
-	vc, augPath := AugmentingPath(&G, &M, &U)
+	//fmt.Println("G:", G)
+	//fmt.Println("M:", M)
+	_, augPath := AugmentingPath(&G, &M, &U)
 	for augPath != nil {
 		for _, x := range augPath.X.Repr.Keys() {
 			for _, y := range augPath.Y.Repr.Keys() {
@@ -117,11 +117,11 @@ func MaximumMatching(G AdjBGraph) AdjMatching {
 			M.Graph.X.Repr[x] = true
 		}
 		U = U.Minus(M.Graph.X)
-		fmt.Println("U:", U)
-		fmt.Println("M:", M, "len:", M.Len())
-		fmt.Println("vc:", vc, "len:", vc[0].Len(), "+", vc[1].Len())
-		fmt.Println("path:", augPath)
-		vc, augPath = AugmentingPath(&G, &M, &U)
+		//fmt.Println("U:", U)
+		//fmt.Println("M:", M, "len:", M.Len())
+		//fmt.Println("vc:", vc, "len:", vc[0].Len(), "+", vc[1].Len())
+		//fmt.Println("path:", augPath)
+		_, augPath = AugmentingPath(&G, &M, &U)
 	}
 	return M
 }

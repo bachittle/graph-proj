@@ -166,8 +166,12 @@ func texMarshal(G AdjBGraph, M *AdjMatching) (b []byte, err error) {
 
 // SavePDF takes the graph and outputs in PDF form for visualization
 func (G AdjBGraph) SavePDF(filename string, M *AdjMatching) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
 	basename := filepath.Base(filename)
-	err := os.Mkdir(filename, 0644)
+	err = os.Mkdir(filename, 0644)
 	if err != nil {
 		if !os.IsExist(err) {
 			return err
@@ -179,22 +183,26 @@ func (G AdjBGraph) SavePDF(filename string, M *AdjMatching) error {
 	}
 	b, err := texMarshal(G, M)
 	if err != nil {
+		_ = os.Chdir(cwd)
 		return err
 	}
 	f, err := os.OpenFile(fmt.Sprint(basename, ".tex"),
 		os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
+		_ = os.Chdir(cwd)
 		return err
 	}
 	f.Write(b)
 	cmd := exec.Command("pdflatex", fmt.Sprint(basename, ".tex"))
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		_ = os.Chdir(cwd)
 		return err
 	}
 	f, err = os.OpenFile(fmt.Sprint(basename, ".log"),
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	f.Write(out)
+	_ = os.Chdir(cwd)
 	return err
 }
 
