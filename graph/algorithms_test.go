@@ -23,7 +23,11 @@ func TestMaximumMatching(t *testing.T) {
 		(&G).Set(v)
 		M := MaximumMatching(G)
 		t.Log("M:", M)
-		err := G.SavePDF(fmt.Sprint("./data/", k), &M)
+		if k == "textbook_ex" {
+			err = G.SavePDF(fmt.Sprint("./data/", k), &M, [2]int{0, 3})
+		} else {
+			err = G.SavePDF(fmt.Sprint("./data/", k), &M, [2]int{0, 0})
+		}
 		if err != nil {
 			t.Fatal(err)
 		}

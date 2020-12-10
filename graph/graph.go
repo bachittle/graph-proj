@@ -119,7 +119,7 @@ func (G AdjBGraph) Marshal(Types ...string) (b []byte, err error) {
 			b, err = json.Marshal(G)
 			break
 		case "tex":
-			b, err = texMarshal(G, nil)
+			b, err = texMarshal(G, nil, nil)
 			break
 		}
 		if err != nil {
@@ -131,7 +131,7 @@ func (G AdjBGraph) Marshal(Types ...string) (b []byte, err error) {
 
 // converts a given graph G to a tex file (for visualization)
 // saves to byte array, and you can do whatever you want with it (save to file, to RAM, etc.)
-func texMarshal(G AdjBGraph, M *AdjMatching) (b []byte, err error) {
+func texMarshal(G AdjBGraph, M *AdjMatching, offset *[2]int) (b []byte, err error) {
 	b = append(b, []byte(`\documentclass{article}
 \usepackage{tikz}
 \begin{document}
@@ -140,11 +140,20 @@ func texMarshal(G AdjBGraph, M *AdjMatching) (b []byte, err error) {
 `)...)
 
 	// node initialization
+
 	for x := range G.X.Repr {
-		b = append(b, []byte(fmt.Sprintf("\t\\node (X%d) at (%d, 0) {};\n", x, x))...)
+		xOff := int(x)
+		if offset != nil {
+			xOff += offset[0]
+		}
+		b = append(b, []byte(fmt.Sprintf("\t\\node (X%d) at (%d, 1) {};\n", x, xOff))...)
 	}
 	for y := range G.Y.Repr {
-		b = append(b, []byte(fmt.Sprintf("\t\\node (Y%d) at (%d, 1) {};\n", y, y))...)
+		yOff := int(y)
+		if offset != nil {
+			yOff += offset[1]
+		}
+		b = append(b, []byte(fmt.Sprintf("\t\\node (Y%d) at (%d, 0) {};\n", y, yOff))...)
 	}
 
 	// edge initialization
@@ -165,7 +174,7 @@ func texMarshal(G AdjBGraph, M *AdjMatching) (b []byte, err error) {
 }
 
 // SavePDF takes the graph and outputs in PDF form for visualization
-func (G AdjBGraph) SavePDF(filename string, M *AdjMatching) error {
+func (G AdjBGraph) SavePDF(filename string, M *AdjMatching, offset [2]int) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -181,7 +190,7 @@ func (G AdjBGraph) SavePDF(filename string, M *AdjMatching) error {
 	if err != nil {
 		return err
 	}
-	b, err := texMarshal(G, M)
+	b, err := texMarshal(G, M, &offset)
 	if err != nil {
 		_ = os.Chdir(cwd)
 		return err
