@@ -18,7 +18,7 @@ func AugmentingPath(G *AdjBGraph, M *AdjMatching, U *AdjVertexSet) (
 	vc [2]AdjVertexSet, // vertices in S, vertices in T
 	augPath *AdjBGraph,
 	order []uint16, // path order, ex: [2, 0, 0, 1]
-	// 								    ^X ^Y ^X ^Y
+	//                                  ^X ^Y ^X ^Y
 ) {
 	augPath = new(AdjBGraph)
 	augPath.Repr = make([][]uint16, G.X.Len())
