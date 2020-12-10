@@ -1,3 +1,5 @@
 graph/data/*
 !graph/data/readme.md
 !graph/data/gen_tests.py
+/*.pdf
+/*.docx
