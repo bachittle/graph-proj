@@ -22,10 +22,17 @@ import (
 func main() {
 	fmt.Println(`Match Maker
 Written by: Bailey Chittle
-----------------------------
+----------------------------`)
+	if len(os.Args) > 1 {
+		fmt.Println("parsing args...")
+	} else {
+		fmt.Println(`usage:
+graph-proj [filename]
+
+entering interactive mode...
 
 Please enter a bipartite graph as an adjacency matrix of size |X|x|Y|.
-It parses in JSON format, so input is as JSON. 
+It parses in JSON format, so write your input following JSON specification. 
 ex:
 >>[
 >>[1, 1],
@@ -35,11 +42,21 @@ ex:
 this creates K2,2.
 
 End your input with the character: !
-to exit, press Ctrl+C`)
+to exit press Ctrl+C, or type ! with no input. `)
+	}
 	var G graph.AdjBGraph
-	for {
+	i := 0
+	for i < len(os.Args) {
 		var mat [][]uint16
 		reader := bufio.NewReader(os.Stdin)
+		if len(os.Args) > 1 {
+			i++
+			fp, err := os.Open(os.Args[i])
+			if err != nil {
+				panic(err)
+			}
+			reader = bufio.NewReader(fp)
+		}
 		/*
 			for i := range mat {
 				mat[i] = make([]uint16, 10)
@@ -49,6 +66,7 @@ to exit, press Ctrl+C`)
 			}
 		*/
 		var buf []byte
+		fmt.Println("enter your input:")
 		for {
 			fmt.Print(">>")
 			line, err := reader.ReadString('\n')
@@ -67,6 +85,7 @@ to exit, press Ctrl+C`)
 		}
 
 		(&G).Set(mat)
+		fmt.Println("calculating maximum matching...")
 		M := graph.MaximumMatching(G)
 		fmt.Println("maximum matching:", M)
 		fmt.Print("print to pdf? (y/n):")
