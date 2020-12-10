@@ -174,7 +174,7 @@ func texMarshal(G AdjBGraph, M *AdjMatching, offset *[2]int) (b []byte, err erro
 }
 
 // SavePDF takes the graph and outputs in PDF form for visualization
-func (G AdjBGraph) SavePDF(filename string, M *AdjMatching, offset [2]int) error {
+func (G AdjBGraph) SavePDF(filename string, M *AdjMatching, offset *[2]int) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -190,7 +190,7 @@ func (G AdjBGraph) SavePDF(filename string, M *AdjMatching, offset [2]int) error
 	if err != nil {
 		return err
 	}
-	b, err := texMarshal(G, M, &offset)
+	b, err := texMarshal(G, M, offset)
 	if err != nil {
 		_ = os.Chdir(cwd)
 		return err
@@ -324,4 +324,23 @@ func EmptyMatch(G *AdjBGraph) (M AdjMatching) {
 // Len gets the length (i.e. number of edges) in the matching.
 func (M AdjMatching) Len() uint16 {
 	return M.Graph.NumEdges()
+}
+
+// Set sets the graph representation of the matching. It only considers edges.
+func (M *AdjMatching) Set(adjMat [][]uint16) {
+	M.Graph.Set(adjMat)
+	var X AdjVertexSet
+	X.Init(&M.Graph)
+	var Y AdjVertexSet
+	Y.Init(&M.Graph)
+	for i := range M.Graph.X.Repr {
+		for j := range M.Graph.Repr {
+			if M.Graph.Repr[i][j] > 0 {
+				X.Repr[uint16(i)] = true
+				Y.Repr[uint16(j)] = true
+			}
+		}
+	}
+	M.Graph.X = X
+	M.Graph.Y = Y
 }

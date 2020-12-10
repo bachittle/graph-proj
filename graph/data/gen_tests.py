@@ -3,8 +3,7 @@ import shutil
 
 d = {}
 
-"""
-for i in range(1, 10):
+for i in range(1, 11, 3):
     mat = []
     # ki, i
     for j in range(i):
@@ -17,7 +16,17 @@ for i in range(1, 10):
     except:
         pass
 
-"""
+mat = []
+for i in range(3):
+    mat.append([])
+    for j in range(3):
+        mat[i].append(0)
+
+mat[0][0] = 1
+mat[0][1] = 1
+mat[1][2] = 1
+mat[2][0] = 1
+d["weird_case"] = mat
 
 mat = []
 for i in range(9):
